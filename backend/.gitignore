@@ -21,6 +21,8 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+app/data/*.json
+
 *.manifest
 *.spec
 

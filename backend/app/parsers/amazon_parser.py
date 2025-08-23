@@ -1,78 +1,141 @@
 import asyncio
-from playwright.async_api import async_playwright
-
 import json
+import logging
 import random
+from typing import List, Dict, Optional
 
-async def extract_item(item):
-    title_el = item.locator("h2.a-size-medium.a-spacing-none.a-color-base.a-text-normal")
-    title = await title_el.inner_text() if await title_el.count() else ""
+from playwright.async_api import async_playwright, Browser, BrowserContext, Page, Locator
 
-    image_el = item.locator("img.s-image").first  
-    image_url = await image_el.get_attribute("src") if await image_el.count() else ""
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+class AmazonParser:
+    BASE_URL = "https://www.amazon.com"
+    SEARCH_BAR_SELECTOR = "input#twotabsearchtextbox"
+    LISTITEM_SELECTOR = 'div.s-main-slot div[data-component-type="s-search-result"]'
+    NEXT_BTN_SELECTOR = "a.s-pagination-next:not(.s-pagination-disabled)"
+    COOKIES_FILE = "app/data/" + "amazon_cookies.json"
+
+    def __init__(self, search_query: str, max_pages: int = 3, headless: bool = False):
+        self.search_query = search_query
+        self.max_pages = max_pages
+        self.headless = headless
+        self.playwright = None
+        self.browser: Optional[Browser] = None
+        self.context: Optional[BrowserContext] = None
+        self.page: Optional[Page] = None
     
-    price_el = item.locator("span.a-price span.a-offscreen")
-    price = await price_el.inner_text() if await price_el.count() else ""
+    async def __aenter__(self):
+        self.playwright = await async_playwright().start()
+        self.browser = await self.playwright.chromium.launch(headless=self.headless)
+    
+        self.context = await self.browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                       "AppleWebKit/537.36 (KHTML, like Gecko) "
+                       "Chrome/237.84.2.178 Safari/537.36",
+            locale="en-US",
+            java_script_enabled=True,
+            viewport={"width": 1920, "height": 1080},
+        )
+        
+        try:
+            with open(self.COOKIES_FILE, "r") as f:
+                cookies = json.load(f)
+            await self.context.add_cookies(cookies)
+            logger.info("Cookies uploaded")
+        except FileNotFoundError:
+            logger.info("Cookies not found, continue without them")
 
-    if title:
+        self.page = await self.context.new_page()
+        return self
+    
+    async def _extract_item(self, item: Locator) -> Optional[Dict[str, str]]:
+        title_el = item.locator("h2.a-size-medium.a-spacing-none.a-color-base.a-text-normal")
+        title = await title_el.inner_text() if await title_el.count() else ""
+        if not title:
+            return None
+        
+        link_el = item.locator("a.a-link-normal.s-line-clamp-2.s-link-style.a-text-normal")
+        relative_url = await link_el.get_attribute("href") if await link_el.count() else ""
+        url = f"{self.BASE_URL}{relative_url}" if relative_url else "N/A"
+
+        image_el = item.locator("img.s-image").first
+        image_url = await image_el.get_attribute("src") if await image_el.count() else "N/A"
+        
+        price_el = item.locator("span.a-price span.a-offscreen").first
+        price = await price_el.inner_text() if await price_el.count() else "N/A"
+
         return {
             "title": title.strip(),
             "image_url": image_url.strip() if image_url else "",
             "price": price.strip(),
+            "url": url.strip()
         }
-    return None
 
-async def parse_amazon(search_query: str):
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                       "AppleWebKit/537.36 (KHTML, like Gecko) "
-                       "Chrome/237.84.2.178 Safari/537.36"
-        )
-        page = await browser.new_page()
-
+    async def run(self) -> List[Dict[str, str]]:
+        logger.info(f"Start parsing using query: '{self.search_query}'")
         try:
-            await page.goto("https://www.amazon.com/")
-            await page.wait_for_selector('input#twotabsearchtextbox')
+            await self.page.goto(self.BASE_URL)
+            await self.page.wait_for_selector(self.SEARCH_BAR_SELECTOR)
         except:
             print("Failed to open Amazon")
-            await browser.close()
-            return []
+            await self.browser.close()
+            return[]
 
-        await page.locator("#twotabsearchtextbox").fill(search_query)
-        await page.keyboard.press("Enter")
-                
-        last_height = await page.evaluate("document.body.scrollHeight")
-        for _ in range(5):
-            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            await asyncio.sleep(random.uniform(1, 2))
-            new_height = await page.evaluate("document.body.scrollHeight")
-            if new_height == last_height:
-                break
-            last_height = new_height
-        
-        await page.wait_for_selector('div.s-main-slot div[data-component-type="s-search-result"]', timeout=30000)
-        items = await page.locator('div.s-main-slot div[data-component-type="s-search-result"]').all()
-        
-        tasks = [extract_item(item) for item in items]
-        results =  [r for r in await asyncio.gather(*tasks) if r]
+        await self.page.locator(self.SEARCH_BAR_SELECTOR).fill(self.search_query)
+        await self.page.keyboard.press("Enter")
+        await self.page.wait_for_load_state('domcontentloaded')
+        await asyncio.sleep(random.uniform(2, 5))
 
-        await browser.close()
-        return results
+        all_results = []
+        for page_num in range(1,self.max_pages + 1):
+            logger.info(f"Collecting data from page {page_num}...")
+            await self.page.wait_for_selector(self.LISTITEM_SELECTOR, timeout=30000)
+            
+            count = await self.page.locator(self.LISTITEM_SELECTOR).count()
+            logger.info(f"Items on page: {count}")
+            
+            items = await self.page.locator(self.LISTITEM_SELECTOR).all()
+            tasks = [self._extract_item(item) for item in items]
+            results = [r for r in await asyncio.gather(*tasks) if r]
+            all_results.extend(results)
+            
+            if page_num < self.max_pages:
+                next_button = self.page.locator(self.NEXT_BTN_SELECTOR)
+                if await next_button.count() > 0:
+                    await next_button.click()
+                    await self.page.wait_for_load_state('domcontentloaded')
+                    await asyncio.sleep(random.uniform(2, 5))
+                else:
+                    break
+        return all_results
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        cookies = await self.context.cookies()
+        with open(self.COOKIES_FILE, "w") as f:
+            json.dump(cookies, f)
+            logger.info("Cookies saved")
+
+        if self.browser:
+            await self.browser.close()
+        if self.playwright:
+            await self.playwright.stop()
+        logger.info("Playwright stopped.")
 
 async def main():
     user_input = input("Enter a search query: ")
-    results = await parse_amazon(user_input)
-    
-    if results:
-        with open("amazon_results.json", "w", encoding="utf-8") as f:
-            json.dump(results, f, ensure_ascii=False, indent=4)
-        
-        print(f"Find {len(results)} results")
-    
-    else:
-        print("No results found")
+    async with AmazonParser(search_query=user_input, max_pages=3) as parser:
+        try:
+            results = await parser.run()
+            if results:
+                output_file = "amazon_results.json"
+                with open("app/data/" + output_file, "w", encoding="utf-8") as f:
+                    json.dump(results, f, ensure_ascii=False, indent=4)
+                logger.info(f"Found {len(results)} results. Data saved to {output_file}")
+            else:
+                logger.warning("No results found.")
+        except Exception as e:
+            logger.error(f"Error: {e}", exc_info=True)
 
 if __name__ == "__main__":
     asyncio.run(main())
