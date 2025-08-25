@@ -14,7 +14,7 @@ class AmazonParser:
     SEARCH_BAR_SELECTOR = "input#twotabsearchtextbox"
     LISTITEM_SELECTOR = 'div.s-main-slot div[data-component-type="s-search-result"]'
     NEXT_BTN_SELECTOR = "a.s-pagination-next:not(.s-pagination-disabled)"
-    COOKIES_FILE = "app/data/" + "amazon_cookies.json"
+    COOKIES_FILE = "app/data/amazon_cookies.json"
 
     def __init__(self, search_query: str, max_pages: int = 3, headless: bool = False):
         self.search_query = search_query
@@ -28,7 +28,6 @@ class AmazonParser:
     async def __aenter__(self):
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(headless=self.headless)
-    
         self.context = await self.browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                        "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -107,7 +106,9 @@ class AmazonParser:
                     await self.page.wait_for_load_state('domcontentloaded')
                     await asyncio.sleep(random.uniform(2, 5))
                 else:
+                    logger.info("No next btn found.")
                     break
+
         return all_results
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -121,21 +122,3 @@ class AmazonParser:
         if self.playwright:
             await self.playwright.stop()
         logger.info("Playwright stopped.")
-
-async def main():
-    user_input = input("Enter a search query: ")
-    async with AmazonParser(search_query=user_input, max_pages=3) as parser:
-        try:
-            results = await parser.run()
-            if results:
-                output_file = "amazon_results.json"
-                with open("app/data/" + output_file, "w", encoding="utf-8") as f:
-                    json.dump(results, f, ensure_ascii=False, indent=4)
-                logger.info(f"Found {len(results)} results. Data saved to {output_file}")
-            else:
-                logger.warning("No results found.")
-        except Exception as e:
-            logger.error(f"Error: {e}", exc_info=True)
-
-if __name__ == "__main__":
-    asyncio.run(main())
