@@ -16,7 +16,7 @@ class AmazonParser:
     NEXT_BTN_SELECTOR = "a.s-pagination-next:not(.s-pagination-disabled)"
     COOKIES_FILE = "app/data/amazon_cookies.json"
 
-    def __init__(self, search_query: str, max_pages: int = 3, headless: bool = False):
+    def __init__(self, search_query: str, max_pages: int = 3, headless: bool = False):        
         self.search_query = search_query
         self.max_pages = max_pages
         self.headless = headless
@@ -76,10 +76,9 @@ class AmazonParser:
         try:
             await self.page.goto(self.BASE_URL)
             await self.page.wait_for_selector(self.SEARCH_BAR_SELECTOR)
-        except:
-            print("Failed to open Amazon")
-            await self.browser.close()
-            return[]
+        except Exception as e:
+            logger.error(f"Failed to open Amazon: {e}")
+            return []
 
         await self.page.locator(self.SEARCH_BAR_SELECTOR).fill(self.search_query)
         await self.page.keyboard.press("Enter")
@@ -87,7 +86,7 @@ class AmazonParser:
         await asyncio.sleep(random.uniform(2, 5))
 
         all_results = []
-        for page_num in range(1,self.max_pages + 1):
+        for page_num in range(1, self.max_pages + 1):
             logger.info(f"Collecting data from page {page_num}...")
             await self.page.wait_for_selector(self.LISTITEM_SELECTOR, timeout=30000)
             
@@ -112,10 +111,13 @@ class AmazonParser:
         return all_results
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        cookies = await self.context.cookies()
-        with open(self.COOKIES_FILE, "w") as f:
-            json.dump(cookies, f)
-            logger.info("Cookies saved")
+        try:
+            cookies = await self.context.cookies()
+            with open(self.COOKIES_FILE, "w") as f:
+                json.dump(cookies, f)
+                logger.info("Cookies saved")
+        except Exception as e:
+            logger.error(f"Failed to save cookies: {e}")
 
         if self.browser:
             await self.browser.close()
