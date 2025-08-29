@@ -6,7 +6,7 @@ authors = ["nyvrae <mex99anue@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = "^3.12"
 fastapi = "^0.116.1"
 sqlalchemy = "^2.0.43"
 playwright = "^1.54.0"

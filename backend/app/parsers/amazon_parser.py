@@ -16,7 +16,7 @@ class AmazonParser:
     NEXT_BTN_SELECTOR = "a.s-pagination-next:not(.s-pagination-disabled)"
     COOKIES_FILE = "app/data/amazon_cookies.json"
 
-    def __init__(self, search_query: str, max_pages: int = 3, headless: bool = False):        
+    def __init__(self, search_query: str, max_pages: int = 3, headless: bool = True):        
         self.search_query = search_query
         self.max_pages = max_pages
         self.headless = headless
@@ -74,8 +74,12 @@ class AmazonParser:
     async def run(self) -> List[Dict[str, str]]:
         logger.info(f"Start parsing using query: '{self.search_query}'")
         try:
-            await self.page.goto(self.BASE_URL)
-            await self.page.wait_for_selector(self.SEARCH_BAR_SELECTOR)
+            await self.page.goto(self.BASE_URL, timeout=60000)
+            await self.page.wait_for_selector(self.SEARCH_BAR_SELECTOR, timeout=30000)
+        except TimeoutError:
+            error_file = "error_screenshot.png"
+            await self.page.screenshot(path=error_file, full_page=True)
+            logger.error(f"Failed to find search bar. Amazon might be showing a CAPTCHA. See {error_file}")
         except Exception as e:
             logger.error(f"Failed to open Amazon: {e}")
             return []
@@ -88,7 +92,13 @@ class AmazonParser:
         all_results = []
         for page_num in range(1, self.max_pages + 1):
             logger.info(f"Collecting data from page {page_num}...")
-            await self.page.wait_for_selector(self.LISTITEM_SELECTOR, timeout=30000)
+            try:
+                await self.page.wait_for_selector(self.LISTITEM_SELECTOR, timeout=30000)
+            except TimeoutError:
+                error_file = f"error_page_{page_num}.png"
+                await self.page.screenshot(path=error_file, full_page=True)
+                logger.warning(f"Could not find items on page {page_num}. Possibly the end or a CAPTCHA. See {error_file}")
+                break
             
             count = await self.page.locator(self.LISTITEM_SELECTOR).count()
             logger.info(f"Items on page: {count}")

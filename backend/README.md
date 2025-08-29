@@ -1,120 +1,149 @@
 # Price Tracker Backend
 
-Backend API для отслеживания цен товаров с Amazon.
+Backend API for tracking prices of products on Amazon.
 
-## Установка
+## Installation
 
-1. Убедитесь, что у вас установлен Python 3.13+ и Poetry
-2. Установите зависимости:
+1.  Make sure you have **Python 3.13+** and **Poetry** installed.
+2.  Install the dependencies:
+
 ```bash
 poetry install
 ```
 
-3. Установите браузеры для Playwright:
+3.  Install the browsers for Playwright:
+
 ```bash
 poetry run playwright install chromium
 ```
 
-4. Инициализируйте базу данных:
+4.  Initialize the database:
+
 ```bash
 poetry run python init_db.py
 ```
 
-## Запуск
+---
 
-### Запуск сервера разработки
+## Running the Application
+
+### Running the Development Server
+
 ```bash
 poetry run python run.py
 ```
 
-Или с uvicorn напрямую:
+Or run directly with uvicorn:
+
 ```bash
 poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Запуск в продакшене
+### Running in Production
+
 ```bash
 poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Запуск поиска товаров (консольный режим)
+### Running Product Search (Console Mode)
+
 ```bash
 poetry run python -m app.main
 ```
 
+---
+
 ## API Endpoints
 
-- `GET /` - Проверка статуса API
-- `GET /search?query={query}&pages={pages}` - Поиск товаров на Amazon
-- `GET /products` - Получить все товары из базы данных
-- `GET /products/{product_id}/prices` - Получить историю цен для товара
+- `GET /` - Check API status.
+- `GET /search?query={query}&pages={pages}` - Search for products on Amazon.
+- `GET /products` - Get all products from the database.
+- `GET /products/{product_id}/prices` - Get the price history for a specific product.
 
-## Примеры использования
+---
 
-### Поиск товаров
+## Usage Examples
+
+### Searching for Products
+
 ```bash
 curl "http://localhost:8000/search?query=laptop&pages=2"
 ```
 
-### Получение всех товаров
+### Getting All Products
+
 ```bash
 curl "http://localhost:8000/products"
 ```
 
-### Получение истории цен
+### Getting Price History
+
 ```bash
 curl "http://localhost:8000/products/1/prices"
 ```
 
-## Структура проекта
+---
+
+## Project Structure
 
 ```
 backend/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py          # FastAPI приложение
-│   ├── db.py            # Настройки базы данных
-│   ├── models/          # SQLAlchemy модели
-│   ├── parsers/         # Парсеры для сайтов
-│   ├── services/        # Бизнес-логика
-│   └── data/            # Данные (cookies, результаты)
-├── logs/                # Логи приложения
-├── run.py               # Скрипт запуска сервера
-├── init_db.py           # Скрипт инициализации БД
-├── pyproject.toml       # Зависимости Poetry
+│   ├── main.py             # FastAPI application
+│   ├── db.py               # Database settings
+│   ├── models/             # SQLAlchemy models
+│   ├── parsers/            # Website parsers
+│   ├── services/           # Business logic
+│   └── data/               # Data (cookies, results)
+├── logs/                   # Application logs
+├── run.py                  # Server startup script
+├── init_db.py              # DB initialization script
+├── pyproject.toml          # Poetry dependencies
 └── README.md
 ```
 
-## База данных
+---
 
-Приложение использует SQLite базу данных `price_tracker.db`. База создается автоматически при первом запуске.
+## Database
 
-### Модели данных
+The application uses an SQLite database named `price_tracker.db`. The database is automatically created on the first run.
 
-- **Product**: Товары (название, URL, изображение)
-- **Price**: Цены товаров (цена, дата, сайт)
+### Data Models
 
-### Инициализация базы данных
+- **Product**: Stores product information (name, URL, image).
+- **Price**: Stores product prices (price, date, website).
 
-База данных автоматически инициализируется при:
-- Запуске FastAPI сервера
-- Запуске консольного режима (`python -m app.main`)
-- Ручном запуске `python init_db.py`
+### Database Initialization
 
-## Логирование
+The database is automatically initialized when:
 
-Логи сохраняются в папку `logs/` и выводятся в консоль.
+- The FastAPI server starts.
+- Console mode is run (`python -m app.main`).
+- The `python init_db.py` script is run manually.
 
-## Устранение неполадок
+---
 
-### Ошибка "no such table: products"
-Если возникает ошибка с отсутствующими таблицами, выполните:
+## Logging
+
+Logs are saved to the `logs/` folder and also output to the console.
+
+---
+
+## Troubleshooting
+
+### "no such table: products" Error
+
+If you encounter a missing tables error, run:
+
 ```bash
 poetry run python init_db.py
 ```
 
-### Проблемы с Playwright
-Если возникают проблемы с браузером, переустановите:
+### Playwright Issues
+
+If you have issues with the browser, try reinstalling it:
+
 ```bash
 poetry run playwright install chromium
 ```
