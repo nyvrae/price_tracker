@@ -11,10 +11,13 @@ if sys.platform == "win32":
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
 
+from typing import List
+
 from .parsers import AmazonParser
 from .db import init_db, get_db
 from .services import save_products
-from .models import Product, Price
+from . import models
+from . import schemas
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -52,14 +55,14 @@ async def search(query: str, pages: int = 3, db: Session = Depends(get_db)):
         logger.error(f"An error occurred during search for query '{query}': {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="An internal error occurred during scraping.")
 
-@app.get("/products")
+@app.get("/products", response_model=List[schemas.Product])
 def get_products_list(db: Session = Depends(get_db)):
-    products = db.query(Product).all()
+    products = db.query(models.Product).all()
     return products
 
-@app.get("/products/{product_id}/prices")
+@app.get("/products/{product_id}/prices", response_model=List[schemas.Price])
 def get_product_prices_list(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product.prices

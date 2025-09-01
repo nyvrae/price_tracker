@@ -11,6 +11,7 @@ fastapi = "^0.116.1"
 sqlalchemy = "^2.0.43"
 playwright = "^1.54.0"
 uvicorn = "^0.32.1"
+pydantic = "^2.11.7"
 
 [tool.poetry.group.dev.dependencies]
 beautifulsoup4 = "^4.13.4"

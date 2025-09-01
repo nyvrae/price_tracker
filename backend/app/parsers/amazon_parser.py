@@ -61,13 +61,18 @@ class AmazonParser:
         image_el = item.locator("img.s-image").first
         image_url = await image_el.get_attribute("src") if await image_el.count() else "N/A"
         
-        price_el = item.locator("span.a-price span.a-offscreen").first
-        price = await price_el.inner_text() if await price_el.count() else "N/A"
+        price = "N/A"
+        if await item.locator("span.a-price span.a-offscreen").count():
+            price = await item.locator("span.a-price span.a-offscreen").first.inner_text()
+        elif await item.locator("span.a-price-whole").count():
+            whole = await item.locator("span.a-price-whole").first.inner_text()
+            fraction = await item.locator("span.a-price-fraction").first.inner_text() if await item.locator("span.a-price-fraction").count() else "00"
+            price = f"${whole}.{fraction}"
 
         return {
             "title": title.strip(),
             "image_url": image_url.strip() if image_url else "",
-            "price": price.strip(),
+            "price": price.strip() if price else None,
             "url": url.strip()
         }
 

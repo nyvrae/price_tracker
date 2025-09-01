@@ -30,17 +30,17 @@ def save_products(session: Session, products: list[dict]):
                     session.flush()
                     logger.info(f"Added new product: {p['title'][:50]}...")
 
-                price_value = parse_price(p["price"])
-                if price_value > 0:
-                    price = Price(
-                        product_id=product.id, 
-                        site="amazon.com", 
-                        price=price_value
-                    )
-                    session.add(price)
-                    saved_count += 1
-                else:
-                    logger.warning(f"Skipping product with zero price: {p['title'][:50]}...")
+                price_value = None
+                if p["price"] != "N/A":
+                    price_value = parse_price(p["price"])
+
+                price = Price(
+                    product_id=product.id,
+                    site="amazon.com",
+                    price=price_value
+                )
+                session.add(price)
+                saved_count += 1
                     
             except Exception as e:
                 logger.error(f"Error saving product {p.get('title', 'Unknown')}: {e}")
