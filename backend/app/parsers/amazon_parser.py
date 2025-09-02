@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class AmazonParser:
-    BASE_URL = "https://www.amazon.com"
+    BASE_URL = "https://www.amazon.co.uk/"
     SEARCH_BAR_SELECTOR = "input#twotabsearchtextbox"
     LISTITEM_SELECTOR = 'div.s-main-slot div[data-component-type="s-search-result"]'
     NEXT_BTN_SELECTOR = "a.s-pagination-next:not(.s-pagination-disabled)"

@@ -61,4 +61,6 @@ venv.bak/
 
 *.log
 
+price_tracker.db
+
 poetry.lock
