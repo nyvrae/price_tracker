@@ -8,16 +8,19 @@ from uvicorn import Config, Server
 if sys.platform == "win32":
     from asyncio.windows_events import ProactorEventLoop
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 
-from typing import List
+from typing import List, Optional
+from decimal import Decimal
 
 from .parsers import AmazonParser
 from .db import init_db, get_db
 from .services import save_products
 from . import models
 from . import schemas
+
+from .crud import search_products
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -74,6 +77,25 @@ if sys.platform == "win32":
             asyncio.set_event_loop(loop)
             logger.info("Running with ProactorEventLoop on Windows")
             asyncio.run(self.serve(sockets=sockets))
+
+@app.get("/products/search", response_model=List[schemas.Product])
+def get_filtered_products(
+    title: Optional[str] = None,
+    min_price: Optional[Decimal] = None,
+    max_price: Optional[Decimal] = None,
+    sort_by_price: str = Query(None, description="asc or desc. If not provided, sorting is not applied", regex="^(asc|desc)$"),
+    db: Session = Depends(get_db)
+):
+    products = search_products(
+        db=db,
+        title=title,
+        min_price=min_price,
+        max_price=max_price,
+        sort_by_price=sort_by_price
+    )
+
+    return products
+
 
 if __name__ == "__main__":
     logger.info("Starting server directly from main.py")
