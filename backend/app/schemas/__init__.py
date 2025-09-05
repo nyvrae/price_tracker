@@ -1,3 +1,3 @@
-from .product import Product, Price
+from .product import Product, Price, ProductWithPrices
 
-__all__ = ["Product", "Price"]
+__all__ = ["Product", "Price", "ProductWithPrices"]

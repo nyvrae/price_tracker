@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl, ConfigDict, condecimal
+from pydantic import BaseModel, HttpUrl, ConfigDict, condecimal, EmailStr
 from datetime import datetime
 from typing import List, Optional
 
@@ -11,9 +11,11 @@ class PriceCreate(PriceBase):
 
 class Price(PriceBase):
     id: int
-    date: datetime
-    
+    created_at: datetime
+
     model_config = ConfigDict(from_attributes=True)
+
+
 
 class ProductBase(BaseModel):
     title: str
@@ -26,5 +28,30 @@ class ProductCreate(ProductBase):
 class Product(ProductBase):
     id: int
     prices: List[Price] = []
-    
+
     model_config = ConfigDict(from_attributes=True)
+
+class ProductWithPrices(Product):
+    pass
+
+
+
+class UserBase(BaseModel):
+    email: EmailStr
+
+class UserCreate(UserBase):
+    password: str
+
+class User(UserBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
