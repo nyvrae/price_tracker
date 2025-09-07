@@ -17,12 +17,6 @@ poetry install
 poetry run playwright install chromium
 ```
 
-4.  Initialize the database:
-
-```bash
-poetry run python init_db.py
-```
-
 ---
 
 ## Running the Application
