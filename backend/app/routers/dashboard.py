@@ -5,13 +5,12 @@ from typing import List
 from .. import schemas, models
 from ..db import get_db
 
-# Представим, что у вас есть функция для получения текущего пользователя по токену
-# from ..auth import get_current_user 
+from ..services import get_current_user
 
 router = APIRouter(
     prefix="/dashboard",
     tags=["Dashboard"],
-    # dependencies=[Depends(get_current_user)] # Раскомментируйте, когда будет готова аутентификация
+    dependencies=[Depends(get_current_user)]
 )
 
 @router.get("/products", response_model=List[schemas.Product])

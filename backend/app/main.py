@@ -27,7 +27,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Price Tracker API",
     version="1.0.0",
-    description="API для отслеживания цен на маркетплейсах."
+    description="API for tracking product prices."
 )
 
 @app.get("/", tags=["Root"])
