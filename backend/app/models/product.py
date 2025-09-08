@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, ForeignKey, UniqueConstraint, Boolean
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime
 
@@ -39,9 +39,12 @@ class Price(Base):
 class UserProducts(Base):
     __tablename__ = "user_products"
     __table_args__ = (UniqueConstraint('user_id', 'product_id', name='user_product_uc'),)
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    favorite = Column(Boolean, default=False, nullable=False)
+
     user = relationship("User", back_populates="user_products")
     product = relationship("Product", back_populates="user_products")

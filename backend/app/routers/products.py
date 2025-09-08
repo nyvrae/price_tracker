@@ -1,5 +1,3 @@
-# /routers/products.py
-
 import logging
 from typing import List, Optional
 from decimal import Decimal
@@ -36,6 +34,10 @@ async def run_parsing_and_save(query: str, pages: int):
         db.close()
         logger.info(f"Database session closed for background task query: '{query}'")
 
+@router.get("/all", response_model=List[schemas.Product])
+def get_all_products(db: Session = Depends(get_db)):
+    products = db.query(models.Product).all()
+    return products
 
 @router.post("/search", status_code=202)
 async def start_products_search(
@@ -48,7 +50,7 @@ async def start_products_search(
     return {"status": "accepted", "message": "Parsing task started in the background."}
 
 
-@router.get("", response_model=List[schemas.Product])
+@router.get("/filter", response_model=List[schemas.Product])
 def get_filtered_products(
     title: Optional[str] = None,
     min_price: Optional[Decimal] = None,
