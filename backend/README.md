@@ -27,6 +27,10 @@ poetry run playwright install chromium
 poetry run python run.py
 ```
 
+```bash
+docker compose up --build
+```
+
 Or run directly with uvicorn:
 
 ```bash
@@ -53,6 +57,7 @@ poetry run python -m app.main
 - `GET /search?query={query}&pages={pages}` - Search for products on Amazon.
 - `GET /products` - Get all products from the database.
 - `GET /products/{product_id}/prices` - Get the price history for a specific product.
+- ...
 
 ---
 
@@ -77,6 +82,33 @@ curl "http://localhost:8000/products/1/prices"
 ```
 
 ---
+
+## Environment variables
+
+Create a `.env` file in `backend/` (or copy from `.env.example`) and adjust values. Docker Compose will load it automatically.
+
+Defaults for local Docker:
+
+- `CELERY_BROKER_URL=redis://redis:6379/0`
+- `CELERY_RESULT_BACKEND=redis://redis:6379/1`
+- `REDIS_HOST=redis`
+
+## Run with Docker
+
+Build and start API, Redis, Celery worker/beat, and Flower:
+
+```bash
+cd backend
+docker compose up -d --build
+```
+
+Open Flower at http://localhost:5555
+
+Follow logs:
+
+```bash
+docker compose logs -f backend celery_worker celery_beat
+```
 
 ## Project Structure
 
