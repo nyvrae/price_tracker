@@ -7,6 +7,8 @@ from ..db import get_db
 
 from ..services import get_current_user
 from .. import models, schemas, crud
+from app.core.celery_app import celery_app
+from app.tasks.update_prices import update_product_price
 
 router = APIRouter(
     prefix="/dashboard",
@@ -47,6 +49,12 @@ async def add_product_to_dashboard(
         user_id=current_user.id,
         product_id=product_id
     )
+    
+    try:
+        celery_app.send_task("app.tasks.update_prices.update_product_price", args=[product_id])
+    except Exception:
+        pass
+    
     db.add(user_product)
     db.commit()
     db.refresh(user_product)
@@ -54,22 +62,44 @@ async def add_product_to_dashboard(
     return user_product.product
 
 @router.delete("/products/{product_id}", status_code=204)
-async def remove_product_from_dashboard(product_id: int, db: Session = Depends(get_db)):
-    pass
+async def remove_product_from_dashboard(
+    product_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    exists = db.query(models.UserProducts).filter(
+        models.UserProducts.user_id == current_user.id,
+        models.UserProducts.product_id == product_id
+    ).first()
+    
+    if not exists:
+        raise HTTPException(
+            status_code=400,
+            detail="Product doesn't exist in dashboard"
+        )
+    db.delete(exists)
+    db.commit()
+    
+    return "Item removed from dashboard"
 
 @router.get("/compare", response_model=List[schemas.ProductWithPrices])
 async def compare_products(
-    product_ids: List[int] = Query(..., description="List of product IDs to compare"),
+    product_id: List[int] = Query(..., description="List of product IDs to compare"),
     db: Session = Depends(get_db)
 ):
     pass
 
-@router.get("/products/{product_id}/history", response_model=schemas.Price)
+@router.get("/products/{product_id}/history", response_model=List[schemas.Price])
 async def get_product_price_history(
     product_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    pass
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return product.prices
 
 @router.get("/filter", response_model=List[schemas.Product])
 def get_filtered_products(

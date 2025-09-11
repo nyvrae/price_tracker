@@ -8,8 +8,9 @@ async def update_prices(db: Session, limit: int = 10):
     
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
+        if browser is None:
+            raise RuntimeError("Не удалось запустить Chromium")
         page = await browser.new_page()
+        if page is None:
+            raise RuntimeError("Не удалось создать страницу")
         await page.goto("https://www.amazon.com/")
-        
-        for product in products[:limit]:
-            price = await fetch_price(page, product_url)

@@ -1,0 +1,116 @@
+version: "3"
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+    working_dir: /app
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: celery_worker
+    entrypoint: ["celery"]
+    command:
+      [
+        "-A",
+        "app.core.celery_app:celery_app",
+        "worker",
+        "--loglevel=info",
+        "-E",
+        "-P",
+        "gevent",
+      ]
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+    restart: on-failure
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: celery_beat
+    entrypoint: ["celery"]
+    command:
+      [
+        "-A",
+        "app.core.celery_app:celery_app",
+        "beat",
+        "--loglevel=info",
+        "--schedule=/celerybeat_data/celerybeat-schedule",
+      ]
+    volumes:
+      - .:/app
+      - celerybeat_data:/celerybeat_data
+    working_dir: /app
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+    restart: on-failure
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flower
+    entrypoint: ["celery"]
+
+    command:
+      [
+        "-A",
+        "app.core.celery_app:celery_app",
+        "flower",
+        "--port=5555",
+        "--address=0.0.0.0",
+      ]
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - redis
+      - celery_worker
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+
+volumes:
+  celerybeat_data:

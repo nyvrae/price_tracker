@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "backend"
-version = "0.2.0"
+version = "1.0.0"
 description = ""
 authors = ["nyvrae <mex99anue@gmail.com>"]
 readme = "README.md"
@@ -16,6 +16,10 @@ python-dotenv = "^1.1.1"
 pyjwt = {extras = ["crypto"], version = "^2.10.1"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-multipart = "^0.0.20"
+celery = "^5.5.3"
+redis = "^6.4.0"
+flower = "^2.0.1"
+gevent = "^25.8.2"
 
 [tool.poetry.group.dev.dependencies]
 beautifulsoup4 = "^4.13.4"
