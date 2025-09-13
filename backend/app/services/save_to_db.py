@@ -8,11 +8,18 @@ logger = logging.getLogger(__name__)
 
 def parse_price(price_str: str) -> Decimal:
     try:
-        clean_str = re.sub(r"[^\d.]", "", price_str)
-        return Decimal(clean_str) if clean_str else Decimal("0.00")
+        if not price_str or price_str.upper() == "N/A":
+            return Decimal("0.00")
+        clean_str = re.sub(r"[^\d,\.]", "", price_str)
+        if "." in clean_str and "," in clean_str:
+            clean_str = clean_str.replace(",", "")
+        elif "," in clean_str:
+            clean_str = clean_str.replace(",", ".")
+        return Decimal(clean_str)
     except Exception as e:
         logger.warning(f"Failed to parse price '{price_str}': {e}")
         return Decimal("0.00")
+
 
 def save_products(session: Session, products: list[dict]):
     try:
