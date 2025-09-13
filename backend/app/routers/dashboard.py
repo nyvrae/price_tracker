@@ -85,9 +85,24 @@ async def remove_product_from_dashboard(
 @router.get("/compare", response_model=List[schemas.ProductWithPrices])
 async def compare_products(
     product_id: List[int] = Query(..., description="List of product IDs to compare"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
-    pass
+    user_products = (
+        db.query(models.UserProducts)
+        .filter(
+            models.UserProducts.user_id == current_user.id,
+            models.UserProducts.product_id.in_(product_id)
+        )
+        .all()
+    )
+
+    if not user_products:
+        raise HTTPException(status_code=404, detail="Products not found")
+    
+    products = [up.product for up in user_products]
+
+    return products
 
 @router.get("/products/{product_id}/history", response_model=List[schemas.Price])
 async def get_product_price_history(
@@ -107,14 +122,42 @@ def get_filtered_products(
     min_price: Optional[Decimal] = None,
     max_price: Optional[Decimal] = None,
     sort_by_price: Optional[str] = Query(None, description="asc or desc", regex="^(asc|desc)$"),
-    db: Session = Depends(get_db)
+    only_favorites: bool = False,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
-    pass
+    products = crud.search_dashboard_products(
+        db=db,
+        user_id=current_user.id,
+        title=title,
+        min_price=min_price,
+        max_price=max_price,
+        sort_by_price=sort_by_price,
+        only_favorites=only_favorites,
+    )
+    return products
 
 @router.patch("/products/{product_id}/favorite", response_model=schemas.Product)
 async def toggle_favorite(
     product_id: int,
     favorite: bool,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
-    pass
+    user_product = (
+        db.query(models.UserProducts)
+        .filter(
+            models.UserProducts.user_id == current_user.id,
+            models.UserProducts.product_id == product_id
+        )
+        .first()
+    )
+
+    if not user_product:
+        raise HTTPException(status_code=404, detail="Product not in dashboard")
+
+    user_product.favorite = favorite
+    db.commit()
+    db.refresh(user_product)
+
+    return user_product.product

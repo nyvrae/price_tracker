@@ -68,9 +68,9 @@ def get_filtered_products(
     return products
 
 
-@router.get("/{product_id}/prices", response_model=List[schemas.Price])
-def get_product_prices_history(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(models.Product).filter(models.Product.id == product_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return product.prices
+# @router.get("/{product_id}/prices", response_model=List[schemas.Price])
+# def get_product_prices_history(product_id: int, db: Session = Depends(get_db)):
+#     product = db.query(models.Product).filter(models.Product.id == product_id).first()
+#     if not product:
+#         raise HTTPException(status_code=404, detail="Product not found")
+#     return product.prices

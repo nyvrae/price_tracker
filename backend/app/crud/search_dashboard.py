@@ -2,17 +2,26 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from decimal import Decimal
-from ..models import Product, Price
+from ..models import Product, Price, UserProducts, User
 
-def search_products(
+
+def search_dashboard_products(
     db: Session,
+    user_id: int,
     title: Optional[str] = None,
     min_price: Optional[Decimal] = None,
     max_price: Optional[Decimal] = None,
-    sort_by_price: Optional[str] = None
+    sort_by_price: Optional[str] = None,
+    only_favorites: bool = False
 ) -> List[Product]:
+    query = (
+        db.query(Product)
+        .join(UserProducts, UserProducts.product_id == Product.id)
+        .filter(UserProducts.user_id == user_id)
+    )
 
-    query = db.query(Product)
+    if only_favorites:
+        query = query.filter(UserProducts.favorite == True)
 
     if title:
         query = query.filter(Product.title.ilike(f"%{title}%"))
