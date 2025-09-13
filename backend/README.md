@@ -1,17 +1,18 @@
 # Price Tracker Backend
 
 Backend API for tracking prices of products on Amazon.
+This is a personal pet-project to showcase backend development skills. CRUD functions are covered by tests; API routes were tested manually.
 
 ## Installation
 
-1.  Make sure you have **Python 3.13+** and **Poetry** installed.
-2.  Install the dependencies:
+1. Make sure you have **Python 3.13+** and **Poetry** installed.
+2. Install the dependencies:
 
 ```bash
 poetry install
 ```
 
-3.  Install the browsers for Playwright:
+3. Install the browsers for Playwright:
 
 ```bash
 poetry run playwright install chromium
@@ -59,6 +60,8 @@ poetry run python -m app.main
 - `GET /products/{product_id}/prices` - Get the price history for a specific product.
 - ...
 
+> Note: CRUD logic is tested automatically; routes were verified manually.
+
 ---
 
 ## Usage Examples
@@ -83,7 +86,7 @@ curl "http://localhost:8000/products/1/prices"
 
 ---
 
-## Environment variables
+## Environment Variables
 
 Create a `.env` file in `backend/` (or copy from `.env.example`) and adjust values. Docker Compose will load it automatically.
 
@@ -92,6 +95,8 @@ Defaults for local Docker:
 - `CELERY_BROKER_URL=redis://redis:6379/0`
 - `CELERY_RESULT_BACKEND=redis://redis:6379/1`
 - `REDIS_HOST=redis`
+
+---
 
 ## Run with Docker
 
@@ -102,13 +107,15 @@ cd backend
 docker compose up -d --build
 ```
 
-Open Flower at http://localhost:5555
+Open Flower at [http://localhost:5555](http://localhost:5555)
 
 Follow logs:
 
 ```bash
 docker compose logs -f backend celery_worker celery_beat
 ```
+
+---
 
 ## Project Structure
 
