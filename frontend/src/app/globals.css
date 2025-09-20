@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat+Alternates:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@import "tailwindcss";
+
+:root {
+    --background-color: #110b11;
+    --accent-color: #064789;
+    --text-color: #ffffff;
+}
+
+@theme {
+    --color-background: var(--background-color);
+    --color-accent: var(--accent-color);
+    --color-text: var(--text-color);
+}
+
+@theme {
+    --font-bebas: 'Bebas Neue', sans-serif;
+    --font-montserrat: 'Montserrat Alternates', sans-serif;
+}
+
+@theme {
+    /* 4px */
+    --spacing: 0.25rem;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: var(--font-montserrat);
+}
+
+@keyframes gradient-x {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.animate-gradient-x {
+    background-size: 200% 200%;
+    animation: gradient-x 3s linear infinite;
+}
