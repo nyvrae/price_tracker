@@ -5,14 +5,16 @@
 
 :root {
     --background-color: #110b11;
+    --sub-color: #525252;
     --accent-color: #064789;
     --text-color: #ffffff;
 }
 
 @theme {
-    --color-background: var(--background-color);
+    --color-black: var(--background-color);
+    --color-sub: var(--sub-color);
     --color-accent: var(--accent-color);
-    --color-text: var(--text-color);
+    --color-white: var(--text-color);
 }
 
 @theme {
