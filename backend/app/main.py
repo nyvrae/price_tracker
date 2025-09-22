@@ -12,6 +12,8 @@ if sys.platform == "win32":
 from .db import init_db
 from .routers import products, auth, dashboard
 
+from fastapi.middleware.cors import CORSMiddleware
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,14 @@ app = FastAPI(
     title="Price Tracker API",
     version="1.0.0",
     description="API for tracking product prices."
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/", tags=["Root"])
