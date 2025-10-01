@@ -1,26 +1,52 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { searchProducts } from "./api";
+import { getAllProducts, triggerSearch } from "./api";
+
+type Product = {
+  id: number;
+  title: string;
+  url: string;
+  image_url: string;
+  prices: { site: string; price: number; created_at: string }[];
+  created_at: string;
+  updated_at: string;
+};
 
 type SearchState = {
-  results: any[];
+  products: Product[];
   loading: boolean;
   error: string | null;
 };
 
 const initialState: SearchState = {
-  results: [],
+  products: [],
   loading: false,
   error: null,
 };
 
-export const fetchSearchResults = createAsyncThunk(
-  "search/fetchResults",
+export const startSearch = createAsyncThunk(
+  "search/startSearch",
   async (query: string, { rejectWithValue }) => {
     try {
-      const data = await searchProducts(query);
+      const data = await triggerSearch(query);
       return data;
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || "Ошибка поиска");
+      return rejectWithValue(
+        err.response?.data?.message || "Ошибка запуска поиска"
+      );
+    }
+  }
+);
+
+export const fetchProducts = createAsyncThunk(
+  "search/fetchProducts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await getAllProducts();
+      return data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Ошибка получения товаров"
+      );
     }
   }
 );
@@ -30,24 +56,35 @@ const searchSlice = createSlice({
   initialState,
   reducers: {
     clearResults(state) {
-      state.results = [];
+      state.products = [];
       state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchSearchResults.pending, (state) => {
+      .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(
-        fetchSearchResults.fulfilled,
-        (state, action: PayloadAction<any[]>) => {
+        fetchProducts.fulfilled,
+        (state, action: PayloadAction<Product[]>) => {
           state.loading = false;
-          state.results = action.payload;
+          state.products = action.payload;
         }
       )
-      .addCase(fetchSearchResults.rejected, (state, action) => {
+      .addCase(fetchProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(startSearch.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(startSearch.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(startSearch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

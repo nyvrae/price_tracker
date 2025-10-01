@@ -15,9 +15,14 @@ import { instance } from "./axios";
 //   return res.data;
 // };
 
-export const searchProducts = async (query: string, pages = 3) => {
+export const triggerSearch = async (query: string, pages = 3) => {
   const res = await instance.post("/api/v1/products/search", null, {
     params: { query, pages },
   });
+  return res.data;
+};
+
+export const getAllProducts = async () => {
+  const res = await instance.get("/api/v1/products/all");
   return res.data;
 };

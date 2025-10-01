@@ -1,12 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat+Alternates:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
 
 @import "tailwindcss";
 
 :root {
     --background-color: #110b11;
     --sub-color: #525252;
-    --accent-color: #3A86FF;
+    --accent-color: #106bff;
+    --accent-hover-color: #4c8efa;
     --text-color: #ffffff;
 }
 
@@ -15,11 +17,13 @@
     --color-sub: var(--sub-color);
     --color-accent: var(--accent-color);
     --color-white: var(--text-color);
+    --color-accent-hover: var(--accent-hover-color);
 }
 
 @theme {
     --font-bebas: 'Bebas Neue', sans-serif;
     --font-montserrat: 'Montserrat Alternates', sans-serif;
+    --font-anton: 'Anton', sans-serif;
 }
 
 @theme {
@@ -28,7 +32,7 @@
 }
 
 body {
-    background-color: var(--background-color);
+    background-color: var(--accent-color);
     color: var(--text-color);
     margin: 0;
     padding: 0;
